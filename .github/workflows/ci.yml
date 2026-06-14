@@ -11,12 +11,8 @@ permissions:
   contents: read
 
 env:
-  SQL_DATABASE_URL: ${{ vars.SQL_DATABASE_URL }}
-  SQL_DATABASE_USERNAME: ${{ vars.SQL_DATABASE_USERNAME }}
-  SQL_DATABASE_PASSWORD: ${{ secrets.SQL_DATABASE_PASSWORD }}
+  SPRING_PROFILES_ACTIVE: test
   BASE_PATH: ${{ github.workspace }}
-  JWT_SECRET: ${{ secrets.JWT_SECRET }}
-  MQ_APP_PASSWORD: ${{ secrets.MQ_APP_PASSWORD }}
 
 jobs:
   build:
@@ -33,5 +29,5 @@ jobs:
           java-version: "25"
           cache: gradle
 
-      - name: Compile application and tests
-        run: .\gradlew.bat --no-daemon compileJava compileTestJava
+      - name: Build and test
+        run: .\gradlew.bat --no-daemon build

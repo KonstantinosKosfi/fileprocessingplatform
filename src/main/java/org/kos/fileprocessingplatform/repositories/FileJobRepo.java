@@ -9,7 +9,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface FileJobRepo extends JpaRepository<FileJobEntity, UUID> {
-    Optional<FileJobEntity> findByIdAndOwnerId(UUID id, UUID ownerId);
+public interface FileJobRepo extends JpaRepository<FileJobEntity, Long> {
+    Optional<FileJobEntity> findByIdAndOwnerId(Long id, UUID ownerId);
     List<FileJobEntity> findAllByOwnerId(UUID ownerId);
 }

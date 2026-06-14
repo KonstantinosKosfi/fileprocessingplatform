@@ -1,6 +1,7 @@
 package org.kos.fileprocessingplatform.controllers;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.kos.fileprocessingplatform.models.dtos.LoginRequest;
 import org.kos.fileprocessingplatform.models.dtos.LoginResponse;
@@ -22,12 +23,12 @@ public class AuthController {
     private final AuthService service;
 
     @PostMapping("/v1/register")
-    public ResponseEntity<String> registerUser(@RequestBody RegisterRequest request) {
+    public ResponseEntity<String> registerUser(@Valid @RequestBody RegisterRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(service.registerUser(request));
     }
 
     @PostMapping("/v1/login")
-    public ResponseEntity<LoginResponse> loginUser(@RequestBody LoginRequest request) {
+    public ResponseEntity<LoginResponse> loginUser(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(service.login(request));
     }
 }

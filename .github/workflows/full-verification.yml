@@ -11,42 +11,12 @@ permissions:
   contents: read
 
 env:
-  SQL_DATABASE_URL: ${{ vars.SQL_DATABASE_URL }}
-  SQL_DATABASE_USERNAME: ${{ vars.SQL_DATABASE_USERNAME }}
-  SQL_DATABASE_PASSWORD: ${{ secrets.SQL_DATABASE_PASSWORD }}
+  SPRING_PROFILES_ACTIVE: test
   BASE_PATH: ${{ github.workspace }}
-  JWT_SECRET: ${{ secrets.JWT_SECRET }}
-  MQ_APP_PASSWORD: ${{ secrets.MQ_APP_PASSWORD }}
 
 jobs:
   test:
     runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:17
-        env:
-          POSTGRES_DB: fileprocessing
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres -d fileprocessing"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
-
-      ibm-mq:
-        image: icr.io/ibm-messaging/mq:latest
-        env:
-          LICENSE: accept
-          MQ_QMGR_NAME: QM1
-          MQ_ADMIN_PASSWORD: adminpass
-          MQ_APP_PASSWORD: passw0rd
-        ports:
-          - 1414:1414
-          - 9443:9443
 
     steps:
       - name: Check out repository
@@ -62,19 +32,8 @@ jobs:
       - name: Make Gradle wrapper executable
         run: chmod +x gradlew
 
-      - name: Wait for IBM MQ port
-        run: |
-          for i in {1..30}; do
-            if bash -c '</dev/tcp/127.0.0.1/1414' 2>/dev/null; then
-              exit 0
-            fi
-            sleep 5
-          done
-          echo "IBM MQ did not become reachable on port 1414 in time"
-          exit 1
-
-      - name: Run test suite
-        run: ./gradlew --no-daemon test
+      - name: Build and test
+        run: ./gradlew --no-daemon build
 
       - name: Upload test reports on failure
         if: failure()

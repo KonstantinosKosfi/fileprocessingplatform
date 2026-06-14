@@ -8,7 +8,6 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -19,7 +18,7 @@ public class FileJobServiceImpl implements FileJobService {
 
 
     @Override
-    public FileJobEntity getJobById(UUID jobId) {
+    public FileJobEntity getJobById(Long jobId) {
         UserEntity currentUser = currentUserService.getCurrentUser();
 
         if (currentUserService.isAdmin(currentUser)) {
@@ -43,7 +42,7 @@ public class FileJobServiceImpl implements FileJobService {
     }
 
     @Override
-    public void deleteJob(UUID jobId) {
+    public void deleteJob(Long jobId) {
         UserEntity currentUser = currentUserService.getCurrentUser();
 
         FileJobEntity job;

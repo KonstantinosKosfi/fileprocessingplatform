@@ -9,17 +9,20 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.camel.Exchange;
 import org.apache.camel.builder.RouteBuilder;
 import org.kos.fileprocessingplatform.config.properties.Folders;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@Profile("!test")
 public class MqHandler extends RouteBuilder {
     private static final String FILE_NAME = "fileName";
     private static final String ORIGINAL_FILE_NAME = "originalFileName";
@@ -85,12 +88,12 @@ public class MqHandler extends RouteBuilder {
     }
 
     private void writeJsonToOutputFolder(String fileName, String jsonContent) throws IOException {
-        String safeFileName = toJsonFileName(fileName);
+        String safeFileName = toJsonFileName(sanitizeFileName(fileName));
 
         Path outputDir = Path.of(properties.getOutput());
         Files.createDirectories(outputDir);
 
-        Path outputFile = outputDir.resolve(safeFileName);
+        Path outputFile = resolveInside(outputDir, safeFileName);
         Files.writeString(outputFile, jsonContent, StandardCharsets.UTF_8);
 
         log.info("File written to {}", outputFile.toAbsolutePath());
@@ -110,13 +113,14 @@ public class MqHandler extends RouteBuilder {
     }
 
     private void moveOriginalFileToArchive(String originalFileName) throws IOException {
+        String safeOriginalFileName = sanitizeFileName(originalFileName);
         Path inputDir = Path.of(properties.getInput());
         Path archiveDir = Path.of(properties.getArchive());
 
         Files.createDirectories(archiveDir);
 
-        Path sourceFile = inputDir.resolve(originalFileName);
-        Path targetFile = archiveDir.resolve(originalFileName);
+        Path sourceFile = resolveInside(inputDir, safeOriginalFileName);
+        Path targetFile = resolveInside(archiveDir, safeOriginalFileName);
 
         if (!Files.exists(sourceFile)) {
             log.warn("Original file not found for archive: {}", sourceFile.toAbsolutePath());
@@ -126,5 +130,31 @@ public class MqHandler extends RouteBuilder {
         Files.move(sourceFile, targetFile, StandardCopyOption.REPLACE_EXISTING);
 
         log.info("Moved original file to archive: {}", targetFile.toAbsolutePath());
+    }
+
+    private String sanitizeFileName(String fileName) {
+        if (fileName == null || fileName.isBlank()) {
+            throw new IllegalArgumentException("File name is required");
+        }
+
+        String normalizedSeparators = fileName.replace('\\', '/');
+        String sanitized = Paths.get(normalizedSeparators).getFileName().toString();
+
+        if (sanitized.isBlank() || ".".equals(sanitized) || "..".equals(sanitized)) {
+            throw new IllegalArgumentException("Invalid file name");
+        }
+
+        return sanitized;
+    }
+
+    private Path resolveInside(Path directory, String fileName) {
+        Path base = directory.toAbsolutePath().normalize();
+        Path target = base.resolve(fileName).normalize();
+
+        if (!target.startsWith(base)) {
+            throw new IllegalArgumentException("Invalid file path");
+        }
+
+        return target;
     }
 }

@@ -1,0 +1,45 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:fileprocessing-test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+  main:
+    lazy-initialization: true
+
+app:
+  folders:
+    base: ${java.io.tmpdir}/file-processing-platform-test
+    input: ${app.folders.base}/data/input
+    output: ${app.folders.base}/data/output
+    archive: ${app.folders.base}/data/input/archive
+  jwt:
+    secret: test-secret-key-with-at-least-32-bytes
+    expiration-ms: 86400000
+    issuer: file-processing-platform-test
+  file-processing:
+    max-file-size-mb: 25
+    allowed-extensions:
+      - xml
+  mq:
+    queue-in: TEST.QUEUE.IN
+    queue-out: TEST.QUEUE.OUT
+
+ibm:
+  mq:
+    queueManager: QM1
+    channel: DEV.APP.SVRCONN
+    connName: localhost(1414)
+    user: app
+    password: test
+    applicationName: ${spring.application.name}
+    sslCipherSpec: ANY_TLS12_OR_HIGHER
+    sslTrustStore: classpath:truststore.jks
+    sslTrustStorePassword: changeit

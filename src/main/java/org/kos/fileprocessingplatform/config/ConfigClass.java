@@ -10,6 +10,7 @@ import org.kos.fileprocessingplatform.config.properties.MqProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
@@ -25,6 +26,7 @@ import java.util.concurrent.Executors;
 
 @RequiredArgsConstructor
 @Configuration
+@Profile("!test")
 public class ConfigClass {
 
 

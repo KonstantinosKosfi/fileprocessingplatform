@@ -11,7 +11,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -28,12 +27,12 @@ public class FileJobController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<FileJobEntity> getJob(@PathVariable UUID id) {
+    public ResponseEntity<FileJobEntity> getJob(@PathVariable Long id) {
         return ResponseEntity.ok(fileJobService.getJobById(id));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteJob(@PathVariable UUID id) {
+    public ResponseEntity<Void> deleteJob(@PathVariable Long id) {
         fileJobService.deleteJob(id);
         return ResponseEntity.noContent().build();
     }

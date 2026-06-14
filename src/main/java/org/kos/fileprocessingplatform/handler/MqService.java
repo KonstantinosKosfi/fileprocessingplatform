@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @Slf4j
 @Service
@@ -29,11 +30,11 @@ public class MqService {
     public void initJobFile(MultipartFile file) throws IOException {
         log.debug("init job file");
         validationFile(file);
-        String fileName = file.getOriginalFilename();
+        String fileName = sanitizeFileName(file.getOriginalFilename());
         log.info("File {} passed validation", fileName);
         saveToInputFolder(file, fileName);
 
-        processFile(file);
+        processFile(file, fileName);
 
     }
 
@@ -62,14 +63,16 @@ public class MqService {
         if (!hasAllowedExtension(filePath.getFileName().toString())) {
             throw new IllegalArgumentException("Invalid file extension");
         }
+
+        validateFileSize(filePath);
     }
 
-    private void processFile(MultipartFile file) throws IOException {
-        log.info("Processing file {}", file.getOriginalFilename());
-        String content = new String(file.getBytes());
+    private void processFile(MultipartFile file, String fileName) throws IOException {
+        log.info("Processing file {}", fileName);
+        String content = new String(file.getBytes(), StandardCharsets.UTF_8);
 
         jmsTemplate.convertAndSend(queueIn, content, message -> {
-            message.setStringProperty("fileName", file.getOriginalFilename());
+            message.setStringProperty("fileName", fileName);
             message.setStringProperty("contentType", file.getContentType());
             return message;
         });
@@ -79,7 +82,7 @@ public class MqService {
         Path inputDir = Path.of(folders.getInput());
         Files.createDirectories(inputDir);
 
-        Path inputFile = inputDir.resolve(fileName);
+        Path inputFile = resolveInside(inputDir, fileName);
         Files.write(inputFile, file.getBytes());
 
         log.info("Saved original file to {}", inputFile.toAbsolutePath());
@@ -90,9 +93,53 @@ public class MqService {
             throw new IllegalArgumentException("File cannot be empty");
         }
 
+        if (file.getSize() > maxFileSizeBytes()) {
+            throw new IllegalArgumentException("File exceeds maximum allowed size");
+        }
+
         if (!hasAllowedExtension(file.getOriginalFilename())) {
             throw new IllegalArgumentException("Invalid file extension");
         }
+    }
+
+    private void validateFileSize(Path filePath) {
+        try {
+            if (Files.size(filePath) > maxFileSizeBytes()) {
+                throw new IllegalArgumentException("File exceeds maximum allowed size");
+            }
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Could not determine file size", e);
+        }
+    }
+
+    private long maxFileSizeBytes() {
+        return properties.getMaxFileSizeMb() * 1024L * 1024L;
+    }
+
+    private String sanitizeFileName(String fileName) {
+        if (fileName == null || fileName.isBlank()) {
+            throw new IllegalArgumentException("File name is required");
+        }
+
+        String normalizedSeparators = fileName.replace('\\', '/');
+        String sanitized = Paths.get(normalizedSeparators).getFileName().toString();
+
+        if (sanitized.isBlank() || ".".equals(sanitized) || "..".equals(sanitized)) {
+            throw new IllegalArgumentException("Invalid file name");
+        }
+
+        return sanitized;
+    }
+
+    private Path resolveInside(Path directory, String fileName) {
+        Path base = directory.toAbsolutePath().normalize();
+        Path target = base.resolve(fileName).normalize();
+
+        if (!target.startsWith(base)) {
+            throw new IllegalArgumentException("Invalid file path");
+        }
+
+        return target;
     }
 
 

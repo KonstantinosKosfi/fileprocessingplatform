@@ -17,8 +17,8 @@ spring:
         keepalive-time: 300000
   jpa:
     hibernate:
-      ddl-auto: create-drop
-    show-sql: true
+      ddl-auto: ${JPA_DDL_AUTO:validate}
+    show-sql: ${JPA_SHOW_SQL:false}
     properties:
       hibernate:
         format_sql: true
@@ -36,12 +36,10 @@ app:
   file-processing:
     max-file-size-mb: 25
     allowed-extensions:
-      - csv
-      - json
       - xml
   mq:
-    queue-in: DEV.QUEUE.1
-    queue-out: DEV.QUEUE.2
+    queue-in: JOBS.IN
+    queue-out: JOBS.OUT
 
 ibm:
   mq:
