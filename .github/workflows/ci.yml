@@ -16,7 +16,7 @@ env:
 
 jobs:
   build:
-    runs-on: [self-hosted, Windows, X64]
+    runs-on: ubuntu-latest
 
     steps:
       - name: Check out repository
@@ -29,5 +29,8 @@ jobs:
           java-version: "25"
           cache: gradle
 
+      - name: Make Gradle wrapper executable
+        run: chmod +x gradlew
+
       - name: Build and test
-        run: .\gradlew.bat --no-daemon "-Dspring.profiles.active=test" build
+        run: ./gradlew --no-daemon "-Dspring.profiles.active=test" build
