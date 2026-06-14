@@ -30,4 +30,4 @@ jobs:
           cache: gradle
 
       - name: Build and test
-        run: .\gradlew.bat --no-daemon build
+        run: .\gradlew.bat --no-daemon "-Dspring.profiles.active=test" build
